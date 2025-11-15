@@ -10,6 +10,7 @@ Ultra-realistic 3D light bulb component with custom GLSL shader.
 | Demo | Description | Link |
 |------|-------------|------|
 | **Interactive Simulator** | Full-featured lighting simulator | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/) |
+| **Pier Demo** | Atmospheric pier lighting scene | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/pier-demo.html) |
 | **WebXR Version** | Quest/PC compatible standalone | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/webxr-bulb.html) |
 | **Minimal Example** | Shader-only, clean code | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/shader-bulb.html) |
 
@@ -61,6 +62,15 @@ See `webxr-bulb.html` for Meta Quest optimization
 - **Low Quality Mode**: Quest-optimized (~72fps on Quest 2)
 - Auto device detection
 
+### Default Bulb Scale
+The high-quality bulb uses realistic proportions:
+- **Total height**: ~4.1 units (3.2 glass + 0.9 socket)
+- **Base scale**: 1.0 (original size)
+- **Recommended range**: 0.2-0.8 for compact scenes
+- **Pier demo example**: 0.2 scale at Y=0.4 (ground level)
+
+Adjust via `group.scale.set(x, y, z)` to fit your scene.
+
 ---
 
 ## 🛠️ Use Cases
@@ -77,6 +87,7 @@ See `webxr-bulb.html` for Meta Quest optimization
 ```
 threejs-realistic-bulb/
 ├── index.html              # Interactive simulator (try all features)
+├── pier-demo.html          # Atmospheric pier scene (NEW)
 ├── webxr-bulb.html         # WebXR standalone (Quest ready)
 ├── shader-bulb.html        # Minimal example (copy from here)
 ├── README.md

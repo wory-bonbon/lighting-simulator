@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pier Lighting Demo - Recording</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #0a0a0a; }
+        #container { width: 100vw; height: 100vh; }
+        #info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">Press SPACE to start animation</div>
+
+    <script>
+        let scene, camera, renderer, composer, bloomPass;
+        let bulbs = [];
+        let animationStarted = false;
+        let currentBulbIndex = 0;
+        let animationTimer = 0;
+        const BULB_INTERVAL = 0.8;
+        const TOTAL_BULBS = 7;
+        
+        let currentColor = 0xffaa33;
+        let currentIntensity = 8;
+        let currentDistance = 12;
+
+        function init() {
+            scene = new THREE.Scene();
+            
+            // 夕暮れ〜夜の空
+            scene.background = new THREE.Color(0x2a3040);
+            scene.fog = new THREE.Fog(0x404050, 15, 50);
+
+            // カメラ：右斜め上から桟橋を見下ろす
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(10, 7, 18);
+            camera.lookAt(-5, 0, -10);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 0.5; // 暗めに
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            setupLights();
+            createWater();
+            createPier();
+            createBulbs();
+            setupPostProcessing();
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !animationStarted) {
+                    startAnimation();
+                }
+            });
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function setupLights() {
+            // 暗い環境光
+            const ambientLight = new THREE.AmbientLight(0x404060, 0.15);
+            scene.add(ambientLight);
+
+            // 微弱な月明かり
+            const sunLight = new THREE.DirectionalLight(0x6688aa, 0.2);
+            sunLight.position.set(-20, 15, -10);
+            scene.add(sunLight);
+        }
+
+        function createWater() {
+            // 水面（より暗く、完全マット）
+            const waterGeometry = new THREE.PlaneGeometry(100, 100);
+            const waterMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0a0a10,
+                roughness: 1.0,
+                metalness: 0.0
+            });
+            const water = new THREE.Mesh(waterGeometry, waterMaterial);
+            water.rotation.x = -Math.PI / 2;
+            water.position.y = -0.1;
+            water.receiveShadow = true;
+            scene.add(water);
+        }
+
+        function createPier() {
+            const pierGroup = new THREE.Group();
+            
+            // 桟橋の板を配置（手前から奥へ）
+            const boardCount = 30;
+            const boardWidth = 2.5;
+            const boardThickness = 0.15;
+            const boardSpacing = 0.8;
+
+            for (let i = 0; i < boardCount; i++) {
+                const z = i * boardSpacing;
+                
+                // 奥に向かって少し細くなる（パース）
+                const perspectiveFactor = 1 - (i / boardCount) * 0.3;
+                const width = boardWidth * 1.3 * perspectiveFactor; // 1.3倍
+                
+                const boardGeometry = new THREE.BoxGeometry(width, boardThickness, 0.6);
+                const boardMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x8b6f47,
+                    roughness: 0.85,
+                    metalness: 0.0
+                });
+                const board = new THREE.Mesh(boardGeometry, boardMaterial);
+                board.position.set(0, 0, -z);
+                board.castShadow = true;
+                board.receiveShadow = true;
+                pierGroup.add(board);
+            }
+
+            // 支柱（両端）
+            const pillarCount = 6;
+            for (let i = 0; i < pillarCount; i++) {
+                const z = -i * (boardCount / pillarCount) * boardSpacing;
+                
+                // 左右の支柱
+                [-1.3, 1.3].forEach(x => {
+                    const pillarGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8);
+                    const pillarMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x5a4a3a,
+                        roughness: 0.9
+                    });
+                    const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+                    pillar.position.set(x, -0.75, z);
+                    pillar.castShadow = true;
+                    pierGroup.add(pillar);
+                });
+            }
+
+            scene.add(pierGroup);
+        }
+
+        function createBulbs() {
+            const startZ = 0;
+            const endZ = -20;
+            const spacing = (startZ - endZ) / (TOTAL_BULBS - 1);
+
+            for (let i = 0; i < TOTAL_BULBS; i++) {
+                const z = startZ - (i * spacing);
+                
+                // 桟橋の両端に配置
+                const xPositions = [-1.5, 1.5];
+                
+                xPositions.forEach(x => {
+                    const bulb = createHighQualityBulb(x, 0.4, z); // 桟橋の高さに
+                    bulbs.push(bulb);
+                    scene.add(bulb.group);
+                    
+                    // 初期状態：全消灯
+                    bulb.pointLight.intensity = 0;
+                    bulb.bulbMesh.material.uniforms.glowIntensity.value = 0;
+                    bulb.filamentMesh.children[1].material.emissiveIntensity = 0;
+                });
+            }
+        }
+
+        function createHighQualityBulb(x = 0, y = 3, z = 0) {
+            const group = new THREE.Group();
+            group.position.set(x, y, z);
+            group.scale.set(0.2, 0.2, 0.2); // より小さく
+            
+            // ソケット
+            const threadGeometry = new THREE.CylinderGeometry(0.52, 0.48, 0.9, 32);
+            const threadMaterial = new THREE.MeshStandardMaterial({
+                color: 0x9a9a9a,
+                metalness: 0.8,
+                roughness: 0.35,
+            });
+            const threadMesh = new THREE.Mesh(threadGeometry, threadMaterial);
+            threadMesh.position.y = -0.45;
+            group.add(threadMesh);
+
+            const capGeometry = new THREE.CylinderGeometry(0.52, 0.5, 0.15, 32);
+            const capMaterial = new THREE.MeshStandardMaterial({
+                color: 0x666666,
+                metalness: 0.9,
+                roughness: 0.2,
+            });
+            const capMesh = new THREE.Mesh(capGeometry, capMaterial);
+            capMesh.position.y = -0.975;
+            group.add(capMesh);
+
+            // ガラス球体（ベジェ曲線）
+            const bulbHeight = 3.2;
+            const curve = new THREE.CurvePath();
+
+            curve.add(new THREE.QuadraticBezierCurve(
+                new THREE.Vector2(0.48, 0.0),
+                new THREE.Vector2(0.47, 0.05),
+                new THREE.Vector2(0.46, 0.12)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(0.46, 0.12),
+                new THREE.Vector2(0.5, 0.25),
+                new THREE.Vector2(0.65, 0.45),
+                new THREE.Vector2(0.88, 0.7)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(0.88, 0.7),
+                new THREE.Vector2(1.1, 0.92),
+                new THREE.Vector2(1.22, 1.15),
+                new THREE.Vector2(1.28, 1.4)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(1.28, 1.4),
+                new THREE.Vector2(1.3, 1.75),
+                new THREE.Vector2(1.28, 2.1),
+                new THREE.Vector2(1.2, 2.4)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(1.2, 2.4),
+                new THREE.Vector2(1.08, 2.68),
+                new THREE.Vector2(0.9, 2.9),
+                new THREE.Vector2(0.68, 3.05)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(0.68, 3.05),
+                new THREE.Vector2(0.48, 3.13),
+                new THREE.Vector2(0.28, 3.18),
+                new THREE.Vector2(0.12, 3.195)
+            ));
+
+            curve.add(new THREE.CubicBezierCurve(
+                new THREE.Vector2(0.12, 3.195),
+                new THREE.Vector2(0.06, 3.1985),
+                new THREE.Vector2(0.02, 3.1995),
+                new THREE.Vector2(0.0, bulbHeight)
+            ));
+
+            const sampledPoints = curve.getPoints(220);
+            const glassGeometry = new THREE.LatheGeometry(sampledPoints, 240);
+
+            // カスタムシェーダー
+            const glassShaderMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    lightPosition: { value: new THREE.Vector3(0, 1.5, 0) },
+                    lightColor: { value: new THREE.Color(currentColor) },
+                    glowIntensity: { value: 0.0 },
+                    fresnelPower: { value: 3.0 },
+                    time: { value: 0.0 }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    varying vec3 vViewPosition;
+                    
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        vViewPosition = -mvPosition.xyz;
+                        vPosition = position;
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 lightPosition;
+                    uniform vec3 lightColor;
+                    uniform float glowIntensity;
+                    uniform float fresnelPower;
+                    uniform float time;
+                    
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    varying vec3 vViewPosition;
+                    
+                    void main() {
+                        vec3 viewDir = normalize(vViewPosition);
+                        float fresnel = pow(1.0 - abs(dot(viewDir, vNormal)), fresnelPower);
+                        
+                        float distToLight = distance(vPosition, lightPosition);
+                        float falloff = 1.0 / (1.0 + distToLight * distToLight * 0.15);
+                        
+                        vec3 toLight = normalize(lightPosition - vPosition);
+                        float diffuse = max(dot(vNormal, toLight), 0.0);
+                        
+                        float heightGradient = smoothstep(-0.2, 0.5, vPosition.y) * 
+                                               smoothstep(3.5, 2.0, vPosition.y);
+                        
+                        float topBoost = smoothstep(2.0, 3.2, vPosition.y) * 1.5;
+                        float flicker = 0.95 + sin(time * 2.0) * 0.05;
+                        
+                        vec3 glow = lightColor * (falloff + topBoost) * glowIntensity * (heightGradient + 0.8) * flicker;
+                        vec3 glassColor = vec3(0.95, 0.97, 1.0);
+                        vec3 edgeGlow = lightColor * fresnel * 0.5;
+                        vec3 finalColor = glassColor * 0.15 + glow + edgeGlow;
+                        
+                        float alpha = 0.3 + fresnel * 0.5 + (falloff + topBoost) * 0.3;
+                        
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+
+            const bulbMesh = new THREE.Mesh(glassGeometry, glassShaderMaterial);
+            bulbMesh.position.y = 0;
+            group.add(bulbMesh);
+
+            // 外側ガラス
+            const outerGlassMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.15,
+                metalness: 0.0,
+                roughness: 0.05,
+                clearcoat: 1.0,
+                clearcoatRoughness: 0.05,
+                transmission: 0.95,
+                ior: 1.52,
+                reflectivity: 0.5,
+                side: THREE.FrontSide,
+            });
+
+            const outerGlassMesh = new THREE.Mesh(glassGeometry, outerGlassMaterial);
+            outerGlassMesh.position.y = 0;
+            group.add(outerGlassMesh);
+
+            // フィラメント
+            const filamentGroup = new THREE.Group();
+            filamentGroup.position.y = 0;
+            
+            const supportGeometry = new THREE.CylinderGeometry(0.02, 0.02, 2.4, 8);
+            const supportMaterial = new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                metalness: 0.7,
+                roughness: 0.3,
+            });
+            const supportMesh = new THREE.Mesh(supportGeometry, supportMaterial);
+            supportMesh.position.y = 1.2;
+            filamentGroup.add(supportMesh);
+
+            const helixPath = new THREE.CurvePath();
+            const helixSegments = 90;
+            const helixHeight = 1.4;
+            const helixRadius = 0.22;
+            const helixTurns = 8;
+
+            for (let i = 0; i < helixSegments; i++) {
+                const t1 = i / helixSegments;
+                const t2 = (i + 1) / helixSegments;
+                const angle1 = t1 * Math.PI * 2 * helixTurns;
+                const angle2 = t2 * Math.PI * 2 * helixTurns;
+                const y1 = t1 * helixHeight + 0.9;
+                const y2 = t2 * helixHeight + 0.9;
+                
+                helixPath.add(new THREE.LineCurve3(
+                    new THREE.Vector3(Math.cos(angle1) * helixRadius, y1, Math.sin(angle1) * helixRadius),
+                    new THREE.Vector3(Math.cos(angle2) * helixRadius, y2, Math.sin(angle2) * helixRadius)
+                ));
+            }
+
+            const tubeGeometry = new THREE.TubeGeometry(helixPath, helixSegments, 0.01, 6, false);
+            const filamentMaterial = new THREE.MeshStandardMaterial({
+                color: currentColor,
+                emissive: currentColor,
+                emissiveIntensity: 0.0,
+                metalness: 0.3,
+                roughness: 0.7,
+            });
+            const filamentWire = new THREE.Mesh(tubeGeometry, filamentMaterial);
+            filamentGroup.add(filamentWire);
+
+            group.add(filamentGroup);
+
+            // PointLight（減衰を強化して下方向を抑制）
+            const pointLight = new THREE.PointLight(currentColor, 0, currentDistance, 3.0);
+            pointLight.position.set(0, 1.5, 0);
+            pointLight.castShadow = true;
+            pointLight.shadow.mapSize.width = 512;
+            pointLight.shadow.mapSize.height = 512;
+            group.add(pointLight);
+
+            return {
+                group: group,
+                bulbMesh: bulbMesh,
+                filamentMesh: filamentGroup,
+                pointLight: pointLight
+            };
+        }
+
+        function setupPostProcessing() {
+            composer = new THREE.EffectComposer(renderer);
+            const renderPass = new THREE.RenderPass(scene, camera);
+            composer.addPass(renderPass);
+
+            bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.7, 0.4, 0.5
+            );
+            composer.addPass(bloomPass);
+        }
+
+        function startAnimation() {
+            animationStarted = true;
+            animationTimer = 0;
+            currentBulbIndex = 0;
+            
+            // 全電球を消灯
+            bulbs.forEach(bulb => {
+                bulb.pointLight.intensity = 0;
+                bulb.bulbMesh.material.uniforms.glowIntensity.value = 0;
+                bulb.filamentMesh.children[1].material.emissiveIntensity = 0;
+            });
+            
+            document.getElementById('info').textContent = 'Recording...';
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (animationStarted) {
+                animationTimer += 0.016;
+
+                // 1ペアずつ点灯（左右同時）
+                const pairToLight = Math.floor(animationTimer / BULB_INTERVAL);
+                
+                if (pairToLight < TOTAL_BULBS && pairToLight !== currentBulbIndex) {
+                    currentBulbIndex = pairToLight;
+                }
+
+                if (currentBulbIndex >= TOTAL_BULBS - 1 && animationTimer > BULB_INTERVAL * TOTAL_BULBS + 2) {
+                    document.getElementById('info').textContent = 'Complete - Press SPACE to restart';
+                    // アニメーション状態をリセット
+                    animationStarted = false;
+                    animationTimer = 0;
+                    currentBulbIndex = -1;
+                }
+            }
+
+            // 滑らかな点灯（ペア単位）
+            bulbs.forEach((bulb, index) => {
+                const pairIndex = Math.floor(index / 2);
+                
+                if (pairIndex <= currentBulbIndex && animationStarted) {
+                    const targetIntensity = currentIntensity;
+                    const targetGlow = 1.5;
+                    const targetEmissive = 4.0;
+                    
+                    bulb.pointLight.intensity += (targetIntensity - bulb.pointLight.intensity) * 0.08;
+                    bulb.bulbMesh.material.uniforms.glowIntensity.value += (targetGlow - bulb.bulbMesh.material.uniforms.glowIntensity.value) * 0.08;
+                    bulb.filamentMesh.children[1].material.emissiveIntensity += (targetEmissive - bulb.filamentMesh.children[1].material.emissiveIntensity) * 0.08;
+                    
+                    bulb.bulbMesh.material.uniforms.time.value = Date.now() * 0.001;
+                }
+            });
+
+            composer.render();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        init();
+    </script>
+</body>
+</html>
