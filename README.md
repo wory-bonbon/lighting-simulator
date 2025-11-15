@@ -1,88 +1,144 @@
-# 照明シミュレーター 💡
+# 💡 Realistic Bulb for Three.js & WebXR
 
-WebベースのインタラクティブなLighting Simulator。Three.jsを使用した3D電球シミュレーション。
+Ultra-realistic 3D light bulb component with custom GLSL shader.  
+**WebXR ready** - Optimized for Meta Quest 2/3.
 
 ![Demo](images/demo.gif)
 
-## デモ
+## 🎯 For Metaverse & Web3D Developers
 
-https://wory-bonbon.github.io/lighting-simulator/
+- **Copy & paste ready** - Single function, no dependencies
+- **VR optimized** - Auto quality switching for Quest
+- **Customizable** - Color, intensity, multiple bulbs support
+- **MIT License** - Use anywhere, even commercial projects
 
-## 機能
+---
 
-### 基本機能
-- 電球数調整（1-10個）
-- 配置パターン（単一/円形/グリッド）
-- カラー変更（フルカラーピッカー）
-- 照明強度・範囲調整
-- 品質モード切替（高品質/軽量）
+## 🚀 Quick Start
 
-### エフェクト機能
-- **プリセット**：温かい電球色/クールな白/ムーディー/パーティー
-- **点滅機能**：一定/ランダム/パルス（速度調整可能）
-- **ミラーボール効果**：60光点、360度全方向照射
-
-### バリエーション
-- **index.html**：フルフィーチャー版（推奨）
-- **webxr-bulb.html**：Meta Quest対応WebXR版
-- **shader-bulb.html**：シェーダー電球単体
-
-## 使い方
-
-1. HTMLファイルをブラウザで開く
-2. 右側のコントロールパネルで調整
-3. プリセットボタンで素早く雰囲気変更
-
-## 技術仕様
-
-- **Three.js r128**：3Dレンダリング
-- **Tailwind CSS**：UI（CDN）
-- **UnrealBloomPass**：ポストプロセッシング
-- **カスタムGLSLシェーダー**：リアルなガラス表現
-
-## パフォーマンス
-
-- 60fps維持（電球10個＋ミラーボール60光点）
-- デバイス最適化対応
-- Quest向け軽量モード自動切替
-
-## 動作環境
-
-- モダンブラウザ（Chrome/Edge/Firefox推奨）
-- WebGL対応デバイス
-- Meta Quest 2/3（webxr-bulb.htmlのみ）
-
-## ライセンス
-
-MIT License
-
-## 開発者
-
-Wory Bonbon - [@wory-bonbon](https://github.com/wory-bonbon)
+### Basic Usage
+```javascript
+// 1. Copy createHighQualityBulb() function from shader-bulb.html
+// 2. Add to your scene
+const bulb = createHighQualityBulb(0, 3, 0);
+scene.add(bulb.group);
+bulb.pointLight.intensity = 22;
+bulb.pointLight.color.setHex(0xffaa33);
 ```
 
-#### 2-3. `LICENSE` 作成
+### WebXR Usage
+See `webxr-bulb.html` for Meta Quest optimization
 
-MITライセンス全文（Cursorで新規ファイル作成 → `LICENSE`）：
+---
+
+## 🎮 Live Demos
+
+| Demo | Description | Link |
+|------|-------------|------|
+| **Interactive Simulator** | Full-featured lighting simulator | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/) |
+| **WebXR Version** | Quest/PC compatible standalone | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/webxr-bulb.html) |
+| **Minimal Example** | Shader-only, clean code | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/shader-bulb.html) |
+
+---
+
+## ✨ Technical Features
+
+### Custom GLSL Shader
+- Fresnel effect (edge glow)
+- Distance-based light falloff
+- Height gradient illumination
+- Realistic glass refraction (IOR 1.52)
+- Flickering animation
+
+### Geometry
+- 220-point Bézier curve bulb shape
+- 240-segment LatheGeometry
+- Spiral tungsten filament (TubeGeometry)
+- Accurate E26 socket model
+
+### Performance
+- **High Quality Mode**: Full shader effects (~60fps on desktop)
+- **Low Quality Mode**: Quest-optimized (~72fps on Quest 2)
+- Auto device detection
+
+---
+
+## 🛠️ Use Cases
+
+- Metaverse lighting fixtures
+- VR interior design apps
+- Architectural visualization
+- Web3D showcases
+- Three.js learning projects
+
+---
+
+## 📦 What's Included
 ```
-MIT License
+threejs-realistic-bulb/
+├── index.html              # Interactive simulator (try all features)
+├── webxr-bulb.html         # WebXR standalone (Quest ready)
+├── shader-bulb.html        # Minimal example (copy from here)
+├── README.md
+└── LICENSE (MIT)
+```
 
-Copyright (c) 2025 Wory Bonbon
+---
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## 🎓 For Beginners
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+**New to Three.js?** Start here:
+1. Open `shader-bulb.html` in browser
+2. View source code
+3. Copy `createShaderBulb()` function
+4. Paste into your project
+5. Customize colors/position
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+**New to WebXR?** Check `webxr-bulb.html` for:
+- Device detection
+- Quality auto-switching
+- VR controller integration
+
+---
+
+## 🤝 Contributing
+
+This is a learning project by a metaverse beginner!  
+Feedback, issues, and PRs welcome.
+
+---
+
+## 📄 License
+
+MIT License - Use freely in personal/commercial projects
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- Three.js r128
+- Inspired by real incandescent bulb physics
+- Tested on Meta Quest 2
+
+---
+
+**⭐ Star this repo if you use it in your metaverse project!**
+```
+
+---
+
+## GitHubトピック追加
+
+リポジトリページ → About の歯車 → Topics:
+```
+threejs
+webxr
+metaverse
+vr
+3d-graphics
+shader
+glsl
+meta-quest
+virtual-reality
+web3d
