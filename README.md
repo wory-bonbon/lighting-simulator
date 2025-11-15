@@ -20,11 +20,11 @@ Ultra-realistic 3D light bulb component with custom GLSL shader.
 
 **Pier Demo - Atmospheric Lighting**
 
-[![Pier Demo](https://img.youtube.com/vi/3iOC1D9A5s8/0.jpg)](https://youtu.be/3iOC1D9A5s8)
+[![Pier Demo](https://img.youtube.com/vi/3iOC1D9A5s8/maxresdefault.jpg)](https://youtu.be/3iOC1D9A5s8)
 
 **Minimal Example - High-Quality Bulb**
 
-[![Minimal Example](https://img.youtube.com/vi/lk4QX8G0RgE/0.jpg)](https://youtu.be/lk4QX8G0RgE)
+[![Minimal Example](https://img.youtube.com/vi/lk4QX8G0RgE/maxresdefault.jpg)](https://youtu.be/lk4QX8G0RgE)
 
 ---
 
