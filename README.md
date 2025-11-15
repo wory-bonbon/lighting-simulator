@@ -88,7 +88,3 @@ threejs-realistic-bulb/
 ## 📄 License
 
 MIT License - Use freely in personal/commercial projects
-
----
-
-**⭐ Star this repo if you use it in your metaverse project!**
