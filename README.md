@@ -3,7 +3,17 @@
 Ultra-realistic 3D light bulb component with custom GLSL shader.  
 **WebXR ready** - Optimized for Meta Quest 2/3.
 
-![Demo](images/demo.gif)
+---
+
+## 🎬 Demos
+
+| Demo | Description | Link |
+|------|-------------|------|
+| **Interactive Simulator** | Full-featured lighting simulator | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/) |
+| **WebXR Version** | Quest/PC compatible standalone | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/webxr-bulb.html) |
+| **Minimal Example** | Shader-only, clean code | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/shader-bulb.html) |
+
+---
 
 ## 🎯 For Metaverse & Web3D Developers
 
@@ -28,16 +38,6 @@ bulb.pointLight.color.setHex(0xffaa33);
 
 ### WebXR Usage
 See `webxr-bulb.html` for Meta Quest optimization
-
----
-
-## 🎮 Live Demos
-
-| Demo | Description | Link |
-|------|-------------|------|
-| **Interactive Simulator** | Full-featured lighting simulator | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/) |
-| **WebXR Version** | Quest/PC compatible standalone | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/webxr-bulb.html) |
-| **Minimal Example** | Shader-only, clean code | [Try it](https://wory-bonbon.github.io/threejs-realistic-bulb/shader-bulb.html) |
 
 ---
 
@@ -85,60 +85,10 @@ threejs-realistic-bulb/
 
 ---
 
-## 🎓 For Beginners
-
-**New to Three.js?** Start here:
-1. Open `shader-bulb.html` in browser
-2. View source code
-3. Copy `createShaderBulb()` function
-4. Paste into your project
-5. Customize colors/position
-
-**New to WebXR?** Check `webxr-bulb.html` for:
-- Device detection
-- Quality auto-switching
-- VR controller integration
-
----
-
-## 🤝 Contributing
-
-This is a learning project by a metaverse beginner!  
-Feedback, issues, and PRs welcome.
-
----
-
 ## 📄 License
 
 MIT License - Use freely in personal/commercial projects
 
 ---
 
-## 🙏 Acknowledgments
-
-Built with:
-- Three.js r128
-- Inspired by real incandescent bulb physics
-- Tested on Meta Quest 2
-
----
-
 **⭐ Star this repo if you use it in your metaverse project!**
-```
-
----
-
-## GitHubトピック追加
-
-リポジトリページ → About の歯車 → Topics:
-```
-threejs
-webxr
-metaverse
-vr
-3d-graphics
-shader
-glsl
-meta-quest
-virtual-reality
-web3d
